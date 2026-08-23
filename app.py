@@ -56,13 +56,91 @@ st.markdown(
         padding:1rem 1.1rem !important;
         box-shadow:0 4px 18px rgba(15,23,42,.04) !important;
     }
-    section[data-testid="stMain"] [data-baseweb="select"] * {
-        color:#F8FAFC !important;
-    }
-    section[data-testid="stMain"] input {
+    /* ---- MAIN FORM CONTROLS: light surface + dark readable text ---- */
+    section[data-testid="stMain"] [data-baseweb="select"] > div {
+        background:#FFFFFF !important;
+        border-color:#CBD5E1 !important;
         color:#172033 !important;
     }
+    section[data-testid="stMain"] [data-baseweb="select"] *,
+    section[data-testid="stMain"] [data-baseweb="select"] div,
+    section[data-testid="stMain"] [data-baseweb="select"] span {
+        color:#172033 !important;
+    }
+    section[data-testid="stMain"] [data-baseweb="select"] svg {
+        fill:#172033 !important;
+        color:#172033 !important;
+    }
+    section[data-testid="stMain"] [data-baseweb="popover"],
+    section[data-testid="stMain"] [data-baseweb="popover"] *,
+    section[data-testid="stMain"] [role="option"] {
+        color:#172033 !important;
+        background:#FFFFFF !important;
+    }
+    section[data-testid="stMain"] input,
+    section[data-testid="stMain"] textarea {
+        background:#FFFFFF !important;
+        color:#172033 !important;
+        -webkit-text-fill-color:#172033 !important;
+        border-color:#CBD5E1 !important;
+    }
+    section[data-testid="stMain"] input::placeholder,
+    section[data-testid="stMain"] textarea::placeholder {
+        color:#64748B !important;
+        -webkit-text-fill-color:#64748B !important;
+    }
+    section[data-testid="stMain"] [data-testid="stNumberInput"] button {
+        color:#172033 !important;
+        background:#FFFFFF !important;
+        border-color:#CBD5E1 !important;
+    }
+    section[data-testid="stMain"] [data-testid="stDateInput"] input {
+        color:#172033 !important;
+        -webkit-text-fill-color:#172033 !important;
+    }
+    section[data-testid="stMain"] [data-testid="stSlider"] label,
     section[data-testid="stMain"] [data-testid="stSlider"] * {
+        color:#172033 !important;
+    }
+
+    /* ---- CARDS / METRICS: force readable text on white surfaces ---- */
+    section[data-testid="stMain"] .card,
+    section[data-testid="stMain"] .card * {
+        color:#172033 !important;
+    }
+    section[data-testid="stMain"] .card .mini-title {
+        color:#172033 !important;
+    }
+    section[data-testid="stMain"] .card .callout,
+    section[data-testid="stMain"] .card .callout * {
+        color:#6B5200 !important;
+    }
+    section[data-testid="stMain"] .metric,
+    section[data-testid="stMain"] .metric * {
+        color:#172033 !important;
+    }
+    section[data-testid="stMain"] .metric .metric-label,
+    section[data-testid="stMain"] .metric .metric-delta {
+        color:#64748B !important;
+    }
+    section[data-testid="stMain"] .result-card,
+    section[data-testid="stMain"] .result-card * {
+        color:#172033 !important;
+    }
+    section[data-testid="stMain"] .result-card .hint,
+    section[data-testid="stMain"] .result-card .label {
+        color:#64748B !important;
+    }
+
+    /* Native Streamlit metric widgets used in Admin Sandbox */
+    section[data-testid="stMain"] [data-testid="stMetric"],
+    section[data-testid="stMain"] [data-testid="stMetric"] * {
+        color:#172033 !important;
+    }
+    section[data-testid="stMain"] [data-testid="stMetricLabel"] {
+        color:#64748B !important;
+    }
+    section[data-testid="stMain"] [data-testid="stMetricValue"] {
         color:#172033 !important;
     }
     .block-container { max-width: 1400px; padding-top: 1.1rem; padding-bottom: 2rem; }
@@ -340,7 +418,18 @@ else:
         chart = pd.DataFrame({"Scenario": ["Baseline", "Simulated"], "Clearance months": [result["baseline_months"], result["simulated_months"]]})
         fig = px.bar(chart, x="Scenario", y="Clearance months", text="Clearance months", title="Projected clearance time")
         fig.update_traces(texttemplate="%{text:.1f} mo", textposition="outside")
-        fig.update_layout(height=360, margin=dict(l=10,r=10,t=55,b=10), paper_bgcolor="white", plot_bgcolor="white", yaxis_title="Months", xaxis_title="")
+        fig.update_layout(
+            height=360,
+            margin=dict(l=10,r=10,t=55,b=10),
+            paper_bgcolor="white",
+            plot_bgcolor="white",
+            font=dict(color="#172033"),
+            title_font=dict(color="#172033"),
+            yaxis_title="Months",
+            xaxis_title="",
+            xaxis=dict(title_font=dict(color="#172033"), tickfont=dict(color="#172033")),
+            yaxis=dict(title_font=dict(color="#172033"), tickfont=dict(color="#172033")),
+        )
         st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
         st.markdown(
