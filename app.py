@@ -30,6 +30,25 @@ st.markdown(
         --white:#FFFFFF;
     }
     .stApp { background: #F4F7FB; }
+    /* Force readable dark text in the main content area across Streamlit themes. */
+    section[data-testid="stMain"] [data-testid="stMarkdownContainer"],
+    section[data-testid="stMain"] [data-testid="stMarkdownContainer"] p,
+    section[data-testid="stMain"] [data-testid="stMarkdownContainer"] h1,
+    section[data-testid="stMain"] [data-testid="stMarkdownContainer"] h2,
+    section[data-testid="stMain"] [data-testid="stMarkdownContainer"] h3,
+    section[data-testid="stMain"] [data-testid="stMarkdownContainer"] h4,
+    section[data-testid="stMain"] label,
+    section[data-testid="stMain"] [data-testid="stMetricLabel"],
+    section[data-testid="stMain"] [data-testid="stMetricValue"],
+    section[data-testid="stMain"] [data-testid="stMetricDelta"] {
+        color: #172033 !important;
+    }
+    section[data-testid="stMain"] .stSelectbox label,
+    section[data-testid="stMain"] .stNumberInput label,
+    section[data-testid="stMain"] .stDateInput label,
+    section[data-testid="stMain"] .stSlider label {
+        color: #172033 !important;
+    }
     .block-container { max-width: 1400px; padding-top: 1.1rem; padding-bottom: 2rem; }
     [data-testid="stSidebar"] { background: #0B1F33; }
     [data-testid="stSidebar"] * { color: #EAF2F8 !important; }
