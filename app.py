@@ -260,7 +260,7 @@ else:
 
     pending = data[data["event"] == 0]
     current_backlog = len(pending)
-    current_monthly_capacity = max(1, int(data[data["event"] == 1].groupby(data["disposal_date"].dt.to_period("M")).size().mean()))
+    current_monthly_capacity = max(1, int(data.loc[data["event"] == 1, "disposal_date"].pipe(pd.to_datetime).dt.to_period("M").value_counts().mean()))
 
     left, right = st.columns([1.05, .95])
     with left:
