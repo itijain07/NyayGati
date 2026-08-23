@@ -379,18 +379,29 @@ elif role == "Court Analytics":
 # -------------------- SANDBOX --------------------
 else:
     st.markdown('<div class="section-title">Admin Sandbox</div>', unsafe_allow_html=True)
-    st.markdown('<div class="section-sub">Explore hypothetical capacity changes without changing any real court schedule.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-sub">Compares two ways of sequencing the SAME pending caseload under the SAME hearing capacity: first-come-first-served vs. a priority/shortest-remaining-first order. No real case is scheduled, ranked or reordered.</div>', unsafe_allow_html=True)
 
-    pending = data[data["event"] == 0]
+    pending = data[data["event"] == 0].copy()
+    disposed = data[data["event"] == 1].copy()
     current_backlog = len(pending)
-    current_monthly_capacity = max(1, int(data.loc[data["event"] == 1, "disposal_date"].pipe(pd.to_datetime).dt.to_period("M").value_counts().mean()))
+
+    # Typical hearings-to-close per case type, learned from disposed cases —
+    # used to estimate how many hearings each still-open case likely needs.
+    case_type_avg_hearings = disposed.groupby("case_type")["hearings"].mean()
+
+    # Convert "cases disposed per month" into a hearing-slot capacity, since
+    # scheduling operates on hearings, not on whole-case closures.
+    current_monthly_case_capacity = max(
+        1, int(disposed["disposal_date"].pipe(pd.to_datetime).dt.to_period("M").value_counts().mean())
+    )
+    current_monthly_hearing_capacity = current_monthly_case_capacity * disposed["hearings"].mean()
 
     left, right = st.columns([1.05, .95])
     with left:
         with st.container(border=True):
             st.markdown('<div class="mini-title">Scenario controls</div>', unsafe_allow_html=True)
-            extra_capacity = st.slider("Additional disposals per month", 0, 500, 100, 10)
-            priority_share = st.slider("Capacity directed to priority category", 0, 100, 30, 5)
+            extra_capacity_pct = st.slider("Additional hearing capacity (%)", 0, 100, 0, 5)
+            priority_share = st.slider("Capacity reserved for priority category", 0, 100, 30, 5)
             priority_category = st.selectbox("Priority category", sorted(data["case_type"].unique()))
             run = st.button("▶ Run what-if simulation", type="primary")
     with right:
@@ -398,44 +409,50 @@ else:
             st.markdown('<div class="mini-title">Current baseline</div>', unsafe_allow_html=True)
             x, y = st.columns(2)
             x.metric("Pending backlog", f"{current_backlog:,}")
-            y.metric("Monthly disposal capacity", f"{current_monthly_capacity:,}")
-            st.markdown("<span style='color:#64748B'>Use the controls to test a hypothetical capacity intervention.</span>", unsafe_allow_html=True)
+            y.metric("Monthly hearing capacity", f"{current_monthly_hearing_capacity:,.0f}")
+            st.markdown("<span style='color:#64748B'>Capacity is held equal in both scenarios below — only the case order changes.</span>", unsafe_allow_html=True)
 
     if run:
+        simulated_capacity = current_monthly_hearing_capacity * (1 + extra_capacity_pct / 100)
+
         result = run_simulation(
-            backlog=current_backlog,
-            monthly_capacity=current_monthly_capacity,
-            extra_capacity=extra_capacity,
-            priority_share=priority_share / 100,
+            pending_df=pending,
+            case_type_avg_hearings=case_type_avg_hearings,
+            monthly_hearing_capacity=simulated_capacity,
             priority_category=priority_category,
+            priority_share=priority_share / 100,
         )
+
         st.markdown("### Scenario result")
         x, y, z = st.columns(3)
-        x.metric("Baseline clearance", f"{result['baseline_months']:.1f} months")
-        y.metric("Simulated clearance", f"{result['simulated_months']:.1f} months")
-        z.metric("Projected improvement", f"{result['improvement_pct']:.1f}%")
+        x.metric("Baseline (FIFO order)", f"{result['baseline_months']} months" if result['baseline_months'] else "—")
+        y.metric("Optimized order", f"{result['optimized_months']} months" if result['optimized_months'] else "—")
+        z.metric("Projected improvement", f"{result['improvement_pct']:.1f}%" if result['improvement_pct'] is not None else "—")
 
-        chart = pd.DataFrame({"Scenario": ["Baseline", "Simulated"], "Clearance months": [result["baseline_months"], result["simulated_months"]]})
-        fig = px.bar(chart, x="Scenario", y="Clearance months", text="Clearance months", title="Projected clearance time")
-        fig.update_traces(texttemplate="%{text:.1f} mo", textposition="outside")
+        curve_a = result["baseline_curve"].assign(Scenario="Baseline (filing order)")
+        curve_b = result["optimized_curve"].assign(Scenario="Optimized (priority + shortest-first)")
+        curve = pd.concat([curve_a, curve_b])
+        fig = px.line(
+            curve, x="month", y="backlog", color="Scenario",
+            title="Backlog remaining over time, by scheduling order",
+            labels={"month": "Month", "backlog": "Cases still pending"},
+        )
         fig.update_layout(
-            height=360,
-            margin=dict(l=10,r=10,t=55,b=10),
+            height=380,
+            margin=dict(l=10, r=10, t=55, b=10),
             paper_bgcolor="white",
             plot_bgcolor="white",
             font=dict(color="#172033"),
             title_font=dict(color="#172033"),
-            yaxis_title="Months",
-            xaxis_title="",
             xaxis=dict(title_font=dict(color="#172033"), tickfont=dict(color="#172033")),
             yaxis=dict(title_font=dict(color="#172033"), tickfont=dict(color="#172033")),
         )
         st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
         st.markdown(
-            f'<div class="ok-callout">✓ Scenario tested: +{extra_capacity} disposals/month, with {priority_share}% of capacity directed toward <b>{priority_category}</b>.</div>',
+            f'<div class="ok-callout">✓ Same {current_backlog:,} pending cases, same monthly hearing capacity in both lines — only the order cases are heard in changes, with {priority_share}% of monthly capacity reserved for <b>{priority_category}</b> and the rest going to whichever case needs the fewest remaining hearings.</div>',
             unsafe_allow_html=True,
         )
-        st.markdown('<div class="callout">⚠️ This is a transparent prototype projection. It does not automatically schedule, rank or reorder real cases.</div>', unsafe_allow_html=True)
+        st.markdown('<div class="callout">⚠️ Remaining-hearings-per-case is estimated from case-type averages in disposed cases, on synthetic demonstration data. This does not automatically schedule, rank or reorder any real case.</div>', unsafe_allow_html=True)
 
 st.markdown('<div class="footer-note">NyayGati • SIH prototype • Synthetic demonstration data • Human oversight required</div>', unsafe_allow_html=True)
