@@ -30,24 +30,40 @@ st.markdown(
         --white:#FFFFFF;
     }
     .stApp { background: #F4F7FB; }
-    /* Force readable dark text in the main content area across Streamlit themes. */
-    section[data-testid="stMain"] [data-testid="stMarkdownContainer"],
-    section[data-testid="stMain"] [data-testid="stMarkdownContainer"] p,
-    section[data-testid="stMain"] [data-testid="stMarkdownContainer"] h1,
-    section[data-testid="stMain"] [data-testid="stMarkdownContainer"] h2,
-    section[data-testid="stMain"] [data-testid="stMarkdownContainer"] h3,
-    section[data-testid="stMain"] [data-testid="stMarkdownContainer"] h4,
+    /* Strong contrast rules — scoped so the dark hero never gets overridden. */
     section[data-testid="stMain"] label,
     section[data-testid="stMain"] [data-testid="stMetricLabel"],
     section[data-testid="stMain"] [data-testid="stMetricValue"],
-    section[data-testid="stMain"] [data-testid="stMetricDelta"] {
-        color: #172033 !important;
-    }
+    section[data-testid="stMain"] [data-testid="stMetricDelta"],
     section[data-testid="stMain"] .stSelectbox label,
     section[data-testid="stMain"] .stNumberInput label,
     section[data-testid="stMain"] .stDateInput label,
-    section[data-testid="stMain"] .stSlider label {
+    section[data-testid="stMain"] .stSlider label,
+    section[data-testid="stMain"] [data-testid="stMarkdownContainer"] h2,
+    section[data-testid="stMain"] [data-testid="stMarkdownContainer"] h3,
+    section[data-testid="stMain"] [data-testid="stMarkdownContainer"] h4 {
         color: #172033 !important;
+    }
+    .hero h1, .hero p, .hero-kicker, .hero .badge {
+        color: #FFFFFF !important;
+    }
+    .section-title { color:#172033 !important; }
+    .section-sub { color:#64748B !important; }
+    [data-testid="stForm"] {
+        background:#FFFFFF !important;
+        border:1px solid #E2E8F0 !important;
+        border-radius:16px !important;
+        padding:1rem 1.1rem !important;
+        box-shadow:0 4px 18px rgba(15,23,42,.04) !important;
+    }
+    section[data-testid="stMain"] [data-baseweb="select"] * {
+        color:#F8FAFC !important;
+    }
+    section[data-testid="stMain"] input {
+        color:#172033 !important;
+    }
+    section[data-testid="stMain"] [data-testid="stSlider"] * {
+        color:#172033 !important;
     }
     .block-container { max-width: 1400px; padding-top: 1.1rem; padding-bottom: 2rem; }
     [data-testid="stSidebar"] { background: #0B1F33; }
@@ -149,7 +165,6 @@ if role == "Citizen Portal":
     st.markdown('<div class="section-sub">Estimate a statistical disposal horizon from historical case patterns.</div>', unsafe_allow_html=True)
 
     with st.form("case_form"):
-        st.markdown('<div class="card">', unsafe_allow_html=True)
         c1, c2, c3 = st.columns(3)
         court = c1.selectbox("Court", sorted(data["court"].unique()))
         case_type = c2.selectbox("Case type", sorted(data["case_type"].unique()))
@@ -158,7 +173,6 @@ if role == "Citizen Portal":
         hearings = c2.number_input("Hearings so far", min_value=0, max_value=60, value=7)
         adjournments = c3.number_input("Adjournments so far", min_value=0, max_value=40, value=2)
         submitted = st.form_submit_button("⚡ Generate disposal estimate", type="primary", use_container_width=False)
-        st.markdown('</div>', unsafe_allow_html=True)
 
     if submitted:
         result = predict_case(
@@ -197,7 +211,11 @@ if role == "Citizen Portal":
             fig.add_hline(y=.75, line_dash="dot", annotation_text="75%")
             fig.add_hline(y=.9, line_dash="dot", annotation_text="90%")
             fig.update_yaxes(range=[0, 1], tickformat=".0%")
-            fig.update_layout(height=380, margin=dict(l=10, r=10, t=20, b=10), paper_bgcolor="white", plot_bgcolor="white")
+            fig.update_layout(height=380, margin=dict(l=10, r=10, t=20, b=10), paper_bgcolor="white", plot_bgcolor="white",
+                font=dict(color="#172033"),
+                title_font=dict(color="#172033"),
+                xaxis=dict(title_font=dict(color="#172033"), tickfont=dict(color="#172033")),
+                yaxis=dict(title_font=dict(color="#172033"), tickfont=dict(color="#172033")))
             st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
             st.markdown('</div>', unsafe_allow_html=True)
 
@@ -244,12 +262,20 @@ elif role == "Court Analytics":
     with c1:
         by_type = pending.groupby("case_type").size().reset_index(name="pending_cases").sort_values("pending_cases", ascending=False)
         fig = px.bar(by_type, x="pending_cases", y="case_type", orientation="h", title="Pending cases by category", labels={"pending_cases":"Pending cases", "case_type":""})
-        fig.update_layout(height=380, margin=dict(l=10,r=10,t=55,b=10), paper_bgcolor="white", plot_bgcolor="white")
+        fig.update_layout(height=380, margin=dict(l=10,r=10,t=55,b=10), paper_bgcolor="white", plot_bgcolor="white",
+                font=dict(color="#172033"),
+                title_font=dict(color="#172033"),
+                xaxis=dict(title_font=dict(color="#172033"), tickfont=dict(color="#172033")),
+                yaxis=dict(title_font=dict(color="#172033"), tickfont=dict(color="#172033")))
         st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
     with c2:
         fig = px.histogram(pending, x="current_age_months", nbins=30, title="Age distribution of pending cases", labels={"current_age_months":"Current age (months)"})
         fig.add_vline(x=60, line_dash="dot", annotation_text="5 years")
-        fig.update_layout(height=380, margin=dict(l=10,r=10,t=55,b=10), paper_bgcolor="white", plot_bgcolor="white")
+        fig.update_layout(height=380, margin=dict(l=10,r=10,t=55,b=10), paper_bgcolor="white", plot_bgcolor="white",
+                font=dict(color="#172033"),
+                title_font=dict(color="#172033"),
+                xaxis=dict(title_font=dict(color="#172033"), tickfont=dict(color="#172033")),
+                yaxis=dict(title_font=dict(color="#172033"), tickfont=dict(color="#172033")))
         st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
     st.markdown("### Potential bottleneck clusters")
@@ -283,21 +309,19 @@ else:
 
     left, right = st.columns([1.05, .95])
     with left:
-        st.markdown('<div class="card">', unsafe_allow_html=True)
-        st.markdown('<div class="mini-title">Scenario controls</div>', unsafe_allow_html=True)
-        extra_capacity = st.slider("Additional disposals per month", 0, 500, 100, 10)
-        priority_share = st.slider("Capacity directed to priority category", 0, 100, 30, 5)
-        priority_category = st.selectbox("Priority category", sorted(data["case_type"].unique()))
-        run = st.button("▶ Run what-if simulation", type="primary")
-        st.markdown('</div>', unsafe_allow_html=True)
+        with st.container(border=True):
+            st.markdown('<div class="mini-title">Scenario controls</div>', unsafe_allow_html=True)
+            extra_capacity = st.slider("Additional disposals per month", 0, 500, 100, 10)
+            priority_share = st.slider("Capacity directed to priority category", 0, 100, 30, 5)
+            priority_category = st.selectbox("Priority category", sorted(data["case_type"].unique()))
+            run = st.button("▶ Run what-if simulation", type="primary")
     with right:
-        st.markdown('<div class="card">', unsafe_allow_html=True)
-        st.markdown('<div class="mini-title">Current baseline</div>', unsafe_allow_html=True)
-        x, y = st.columns(2)
-        x.metric("Pending backlog", f"{current_backlog:,}")
-        y.metric("Monthly disposal capacity", f"{current_monthly_capacity:,}")
-        st.markdown("<br><span style='color:#64748B'>Use the controls to test a hypothetical capacity intervention.</span>", unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+        with st.container(border=True):
+            st.markdown('<div class="mini-title">Current baseline</div>', unsafe_allow_html=True)
+            x, y = st.columns(2)
+            x.metric("Pending backlog", f"{current_backlog:,}")
+            y.metric("Monthly disposal capacity", f"{current_monthly_capacity:,}")
+            st.markdown("<span style='color:#64748B'>Use the controls to test a hypothetical capacity intervention.</span>", unsafe_allow_html=True)
 
     if run:
         result = run_simulation(
